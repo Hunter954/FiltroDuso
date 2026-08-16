@@ -284,6 +284,7 @@
       cameraStream=stream;
       cameraVideo.srcObject=stream;
       await cameraVideo.play();
+      fitCameraCanvas();
       cameraLoading.hidden=true;
       cameraStatus.textContent='Reconhecimento facial ativo';
       renderCamera();
@@ -298,6 +299,17 @@
     const vw=cameraVideo.videoWidth||720, vh=cameraVideo.videoHeight||720;
     const side=Math.min(vw,vh);
     return {vw,vh,side,sx:(vw-side)/2,sy:(vh-side)/2};
+  }
+
+  function fitCameraCanvas(){
+    if(!cameraCanvas) return;
+    const dpr=Math.max(1,Math.min(window.devicePixelRatio||1,2));
+    const wrap=cameraCanvas.parentElement;
+    const rect=wrap?.getBoundingClientRect();
+    if(!rect?.width || !rect?.height) return;
+    const size=Math.max(rect.width,rect.height);
+    cameraCanvas.width=Math.round(size*dpr);
+    cameraCanvas.height=Math.round(size*dpr);
   }
 
   function mapLandmark(lm,size){
@@ -325,13 +337,14 @@
     targetCtx.save();
     targetCtx.translate(pose.cx,pose.cy);
     targetCtx.rotate(pose.angle);
+    targetCtx.scale(-1,-1);
     targetCtx.drawImage(glasses,-pose.width/2,-h/2,pose.width,h);
     targetCtx.restore();
   }
 
   function renderCamera(){
     if(!cameraStream || !cameraVideo.videoWidth) return;
-    const size=cameraCanvas.width;
+    const size=cameraCanvas.width || 720;
     const c=sourceCrop();
     cameraCtx.clearRect(0,0,size,size);
     cameraCtx.save();
@@ -370,6 +383,7 @@
     if(cameraModal){cameraModal.hidden=true;cameraModal.setAttribute('aria-hidden','true')}
     document.body.classList.remove('camera-open');
     lastLandmarks=null;lastVideoTime=-1;
+    cameraLoading.hidden=false;
   }
 
   async function takeCameraPhoto(){
@@ -395,6 +409,7 @@
   cameraModal?.addEventListener('click',e=>{if(e.target===cameraModal) stopCamera()});
   document.addEventListener('keydown',e=>{if(e.key==='Escape' && cameraModal && !cameraModal.hidden) stopCamera()});
   window.addEventListener('pagehide',stopCamera);
+  window.addEventListener('resize',()=>{if(cameraModal && !cameraModal.hidden) fitCameraCanvas()});
 
   loadOverlay();
   draw();
