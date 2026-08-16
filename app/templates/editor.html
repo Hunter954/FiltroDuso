@@ -1,0 +1,68 @@
+{% extends 'base.html' %}{% block title %}Criar foto • {{ featured.name }}{% endblock %}
+{% block head %}<link rel="preload" as="image" href="{{ url_for('public.filter_asset',filter_id=featured.id,kind='overlay') }}" fetchpriority="high"><link rel="preload" as="image" href="{{ url_for('static',filename='img/oculos-duso.png') }}">{% endblock %}
+{% block body %}
+<div class="site editor-site" style="--brand:{{featured.primary_color}};--accent:{{featured.accent_color}}">
+<main class="editor-simple-main">
+<header class="editor-header-band">
+  <div class="wrap editor-topline">
+    <a class="editor-campaign-logo" href="{{ url_for('public.filter_page', slug=featured.slug) }}" aria-label="Voltar para a página inicial">
+      {% set editor_logo_url=url_for('public.footer_logo') %}
+      <img src="{{editor_logo_url}}" alt="Logomarca da campanha" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+      <span class="editor-logo-fallback">DUSO • 43123</span>
+    </a>
+    <a href="{{ url_for('public.filter_page', slug=featured.slug) }}" class="editor-back">← Voltar</a>
+  </div>
+</header>
+<section class="editor-simple-section"><div class="wrap editor-simple-wrap">
+<div class="editor-workspace">
+  <div class="editor-canvas-area {{'has-filter-nav' if filters|length > 1 else 'no-filter-nav'}}">
+    {% if filters|length > 1 %}<button class="filter-arrow filter-prev" id="filterPrev" aria-label="Filtro anterior">‹</button>{% endif %}
+    <div class="editor-stage" id="editorStage">
+      <canvas id="editorCanvas" width="1080" height="1080"></canvas>
+      <div class="stage-hint" id="stageHint">
+        <div class="stage-upload-icon">↑</div>
+        <b>Crie sua foto de apoio</b>
+        <small>Envie uma foto ou use a câmera frontal com o óculos Duso.</small>
+        <div class="source-actions">
+          <button type="button" class="source-btn source-upload" id="choosePhoto"><span>▣</span> Escolher foto</button>
+          <button type="button" class="source-btn source-camera" id="openCamera"><span>◉</span> Usar câmera</button>
+        </div>
+        <em>JPG, PNG ou WEBP • até 15 MB</em>
+      </div>
+    </div>
+    {% if filters|length > 1 %}<button class="filter-arrow filter-next" id="filterNext" aria-label="Próximo filtro">›</button>{% endif %}
+  </div>
+  <input type="file" id="photoInput" accept="image/jpeg,image/png,image/webp" hidden>
+  <div class="editor-live-controls" id="liveControls" hidden>
+    <div class="zoom-compact"><button type="button" id="zoomOut" aria-label="Diminuir zoom">−</button><span>Zoom</span><button type="button" id="zoomIn" aria-label="Aumentar zoom">+</button></div>
+    <button class="btn btn-primary finish-simple" id="finishPhoto">Finalizar foto</button>
+  </div>
+  <div class="editor-done" id="doneState" hidden><div class="success-mark">✓</div><h2>Sua foto ficou pronta!</h2><a class="btn btn-primary" id="downloadPhoto" href="#">↓ Baixar minha foto</a><button class="btn btn-soft" id="makeAnother">Fazer outra foto</button></div>
+</div>
+</div></section>
+</main>
+<footer><div class="wrap footer-inner"><div class="footer-logo-slot">{% set logo_url=url_for('public.footer_logo') %}<img src="{{logo_url}}" alt="Logomarca da campanha" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><span class="footer-logo-fallback">DUSO • 43123</span></div><p>Ferramenta gratuita para criação de foto de perfil com moldura.</p></div></footer>
+</div>
+
+<div class="camera-modal" id="cameraModal" hidden aria-hidden="true">
+  <div class="camera-shell" role="dialog" aria-modal="true" aria-label="Câmera com óculos Duso">
+    <div class="camera-head"><div><b>Câmera frontal</b><small id="cameraStatus">Preparando reconhecimento facial…</small></div><button type="button" id="closeCamera" aria-label="Fechar câmera">×</button></div>
+    <div class="camera-preview-wrap">
+      <video id="cameraVideo" playsinline muted hidden></video>
+      <canvas id="cameraCanvas" width="720" height="720"></canvas>
+      <div class="face-guide" aria-hidden="true"></div>
+      <div class="camera-loading" id="cameraLoading"><span></span><b>Ativando câmera…</b></div>
+    </div>
+    <div class="camera-help"><span class="face-dot" id="faceDot"></span><span id="faceMessage">Centralize seu rosto para encaixar o óculos automaticamente.</span></div>
+    <div class="camera-actions"><button type="button" class="btn btn-soft" id="cancelCamera">Cancelar</button><button type="button" class="btn btn-primary camera-shot" id="captureCamera" disabled>● Tirar foto</button></div>
+    <small class="camera-privacy">O reconhecimento acontece no seu navegador. A foto só é enviada quando você tirar a foto.</small>
+  </div>
+</div>
+
+<script>window.FILTER_CONFIG={{ {'id':featured.id,'overlay':url_for('public.filter_asset',filter_id=featured.id,kind='overlay'),'name':featured.name,'filters':filters|map(attribute='id')|list,'glasses':url_for('static',filename='img/oculos-duso.png')}|tojson }};window.FILTER_OPTIONS={{ filters|map(attribute='id')|list|tojson }};</script>
+<script>
+window.FILTERS = [
+{% for f in filters %}{id:{{f.id}},name:{{f.name|tojson}},slug:{{f.slug|tojson}},overlay:{{url_for('public.filter_asset',filter_id=f.id,kind='overlay')|tojson}}}{% if not loop.last %},{% endif %}{% endfor %}
+];
+</script>
+{% endblock %}

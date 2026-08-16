@@ -1,0 +1,23 @@
+{% extends 'admin/base.html' %}{% block title %}Configurações{% endblock %}{% block page_title %}Configurações{% endblock %}{% block page_subtitle %}Conta administrativa, identidade visual e alinhamento do site{% endblock %}{% block content %}
+<div class="settings-grid">
+<section class="panel"><div class="panel-head"><div><span>CONTA E VISUAL</span><h3>Configurações do site</h3></div></div>
+<form class="settings-form" method="post" enctype="multipart/form-data"><input type="hidden" name="csrf_token" value="{{csrf_token()}}">
+<label>Nome<input name="name" value="{{current_user.name}}" required></label>
+<label>E-mail<input type="email" name="email" value="{{current_user.email}}" required></label>
+<label>Nova senha <small>deixe em branco para manter</small><input type="password" name="password" minlength="10" placeholder="Mínimo 10 caracteres"></label>
+
+<div class="layout-control">
+  <div class="layout-control-head"><div><b>Largura do conteúdo</b><small>Quanto menor, mais o site entra para o centro. Quanto maior, mais abre para as laterais.</small></div><output id="contentWidthValue">{{site_settings.content_width}} px</output></div>
+  <input type="range" id="contentWidthRange" min="760" max="1400" step="10" value="{{site_settings.content_width}}">
+  <div class="layout-control-row"><span>Mais para dentro</span><input type="number" id="contentWidthInput" name="content_width" min="760" max="1400" step="10" value="{{site_settings.content_width}}"><span>Mais aberto</span></div>
+  <div class="layout-preview"><div id="layoutPreviewInner"><i></i><span>ÁREA DO CONTEÚDO</span><i></i></div></div>
+</div>
+
+<label class="file-box"><b>Logomarca do rodapé</b><small>Envie PNG, JPG ou WEBP. O sistema converte e salva em PNG.</small><input type="file" name="footer_logo" accept="image/png,image/jpeg,image/webp"></label>
+{% if footer_logo_exists %}<div class="footer-logo-preview"><span>LOGO ATUAL</span><img src="{{url_for('public.footer_logo')}}?v={{range(1,999999)|random}}" alt="Logo atual"></div>{% endif %}
+<button class="admin-primary">Salvar alterações</button></form></section>
+<section class="panel info-panel"><div class="panel-head"><div><span>OPERAÇÃO</span><h3>Configuração do servidor</h3></div></div><div class="info-row"><span>Banco de dados</span><b>PostgreSQL / SQLAlchemy</b></div><div class="info-row"><span>Arquivos persistentes</span><b>Railway Volume /data</b></div><div class="info-row"><span>Retenção</span><b>{{config.RETENTION_DAYS}} dias</b></div><div class="info-row"><span>Limite de upload</span><b>{{(config.MAX_CONTENT_LENGTH/1024/1024)|int}} MB</b></div><div class="info-row"><span>Largura atual</span><b>{{site_settings.content_width}} px</b></div><p class="note">A largura escolhida é aplicada automaticamente na home, rodapé e demais áreas que usam o alinhamento padrão do site.</p></section></div>
+<script>
+(()=>{const r=document.getElementById('contentWidthRange'),n=document.getElementById('contentWidthInput'),o=document.getElementById('contentWidthValue'),p=document.getElementById('layoutPreviewInner');if(!r||!n)return;const sync=v=>{v=Math.max(760,Math.min(1400,Number(v)||1080));r.value=v;n.value=v;o.textContent=v+' px';const pct=34+((v-760)/(1400-760))*62;p.style.width=pct+'%'};r.addEventListener('input',()=>sync(r.value));n.addEventListener('input',()=>sync(n.value));sync(n.value)})();
+</script>
+{% endblock %}

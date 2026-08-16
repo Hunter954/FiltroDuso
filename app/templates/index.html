@@ -1,0 +1,13 @@
+{% extends 'base.html' %}{% block title %}Moldura {{ featured.name if featured else '43123' }}{% endblock %}
+{% block head %}{% if featured %}<link rel="prefetch" href="{{ url_for('public.editor_page',slug=featured.slug) }}"><link rel="prefetch" as="image" href="{{ url_for('public.filter_asset',filter_id=featured.id,kind='overlay') }}">{% endif %}{% endblock %}
+{% block body %}
+{% if featured %}<div class="site" style="--brand:{{featured.primary_color}};--accent:{{featured.accent_color}}">
+<main>
+<section class="hero hero-only"><div class="hero-glow"></div><div class="wrap hero-grid">
+<div class="hero-copy"><span class="eyebrow"><i></i> MOLDURA OFICIAL • 43123</span><h1>{{featured.headline}}</h1><p>{{featured.subheadline}}</p><div class="hero-actions"><a class="btn btn-primary" href="{{ url_for('public.editor_page', slug=featured.slug) }}">Colocar moldura <span>→</span></a></div><div class="trust"><span>✓ Grátis</span><span>✓ Leva menos de 1 minuto</span><span>✓ Pronto para Instagram e WhatsApp</span></div></div>
+<div class="hero-visual"><div class="visual-orbit"></div><div class="phone-card"><div class="phone-top"><span></span><b>PRÉVIA</b><em>1:1</em></div><img src="{{url_for('public.filter_asset',filter_id=featured.id,kind='example')}}" alt="Exemplo com moldura" fetchpriority="low" decoding="async"><div class="phone-foot"><strong>Sua foto. Seu apoio.</strong><small>Toque em “Colocar moldura” e personalize.</small></div></div></div>
+</div></section>
+</main>
+<footer><div class="wrap footer-inner"><div class="footer-logo-slot">{% set logo_url=url_for('public.footer_logo') %}<img src="{{logo_url}}" alt="Logomarca da campanha" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><span class="footer-logo-fallback">DUSO • 43123</span></div><p>Ferramenta gratuita para criação de foto de perfil com moldura.</p></div></footer>
+</div>{% else %}<p>Nenhum filtro ativo.</p>{% endif %}
+{% endblock %}
