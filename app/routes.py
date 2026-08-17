@@ -152,7 +152,7 @@ def api_complete(submission_id):
     transform = data.get("transform")
     if isinstance(transform, dict):
         try:
-            render_submission_image(current_app, s, transform, out)
+            render_submission_image(current_app, s, transform, out, include_overlay=data.get("include_overlay", True) is not False)
         except Exception:
             return jsonify(error="Não foi possível finalizar a imagem."), 400
     else:

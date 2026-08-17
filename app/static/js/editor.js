@@ -20,6 +20,9 @@
   const prev = document.getElementById('filterPrev');
   const next = document.getElementById('filterNext');
   const filterName = document.getElementById('filterName');
+  const filterChoice = document.getElementById('filterChoice');
+  const withFilterBtn = document.getElementById('withFilter');
+  const withoutFilterBtn = document.getElementById('withoutFilter');
 
   const cameraModal = document.getElementById('cameraModal');
   const cameraVideo = document.getElementById('cameraVideo');
@@ -54,6 +57,8 @@
   let lastVideoTime = -1;
   let lastLandmarks = null;
   let cameraStarting = false;
+  let cameraCapture = false;
+  let includeCampaignFilter = true;
   const glasses = new Image();
   glasses.crossOrigin = 'anonymous';
   glasses.src = cfg.glasses;
@@ -89,7 +94,7 @@
     ctx.fillStyle='#fff';
     ctx.fillRect(0,0,1080,1080);
     if(photo) ctx.drawImage(photo,x,y,photo.naturalWidth*scale,photo.naturalHeight*scale);
-    if(overlay.complete && overlay.naturalWidth) ctx.drawImage(overlay,0,0,1080,1080);
+    if(includeCampaignFilter && overlay.complete && overlay.naturalWidth) ctx.drawImage(overlay,0,0,1080,1080);
   }
 
   function resetPosition(){
@@ -144,9 +149,11 @@
     hint.querySelector('#openCamera')?.addEventListener('click',startCamera);
   }
 
-  async function handleFile(file){
+  async function handleFile(file, options={}){
     if(!file) return;
     setHintLoading();
+    cameraCapture=Boolean(options.cameraCapture);
+    includeCampaignFilter=true;
     const fd=new FormData();
     fd.append('filter_id',activeFilter.id);
     fd.append('photo',file,file.name || 'foto-duso.jpg');
@@ -161,6 +168,7 @@
         controls.hidden=false;
         doneState.hidden=true;
         resetPosition();
+        syncFilterChoice();
       };
       photo.src=data.photo_url;
     }catch(err){
@@ -228,7 +236,7 @@
     finishPhoto.textContent='Finalizando...';
     finishPhoto.disabled=true;
     try{
-      const res=await fetch(`/api/complete/${submission.submission_id}`,{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':csrf},body:JSON.stringify({token:submission.token,filter_id:activeFilter.id,transform:{x,y,scale}})});
+      const res=await fetch(`/api/complete/${submission.submission_id}`,{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':csrf},body:JSON.stringify({token:submission.token,filter_id:activeFilter.id,include_overlay:includeCampaignFilter,transform:{x,y,scale}})});
       const data=await readJson(res,'Não foi possível finalizar a imagem. Tente novamente.');
       downloadPhoto.href=data.download_url;
       controls.hidden=true;
@@ -239,8 +247,18 @@
     }
   });
 
+  function syncFilterChoice(){
+    if(!filterChoice) return;
+    filterChoice.hidden=!cameraCapture;
+    withFilterBtn?.classList.toggle('active',includeCampaignFilter);
+    withoutFilterBtn?.classList.toggle('active',!includeCampaignFilter);
+  }
+
+  withFilterBtn?.addEventListener('click',()=>{includeCampaignFilter=true;syncFilterChoice();draw()});
+  withoutFilterBtn?.addEventListener('click',()=>{includeCampaignFilter=false;syncFilterChoice();draw()});
+
   makeAnother?.addEventListener('click',()=>{
-    photo=null;submission=null;input.value='';
+    photo=null;submission=null;input.value='';cameraCapture=false;includeCampaignFilter=true;
     controls.hidden=true;doneState.hidden=true;hint.hidden=false;
     restoreHint();
     draw();
@@ -374,33 +392,57 @@
     cameraRAF=requestAnimationFrame(renderCamera);
   }
 
-  function stopCamera(){
+  function releaseCameraStream(){
     if(cameraRAF) cancelAnimationFrame(cameraRAF);
     cameraRAF=0;
     cameraStream?.getTracks().forEach(t=>t.stop());
     cameraStream=null;
     if(cameraVideo) cameraVideo.srcObject=null;
+    lastVideoTime=-1;
+  }
+
+  function stopCamera(){
+    releaseCameraStream();
     if(cameraModal){cameraModal.hidden=true;cameraModal.setAttribute('aria-hidden','true')}
     document.body.classList.remove('camera-open');
-    lastLandmarks=null;lastVideoTime=-1;
+    lastLandmarks=null;
     cameraLoading.hidden=false;
+    cameraLoading.querySelector('b').textContent='Ativando câmera…';
+    captureCamera.textContent='● Tirar foto';
+    cameraStarting=false;
   }
 
   async function takeCameraPhoto(){
-    if(!lastLandmarks || !cameraVideo.videoWidth) return;
-    captureCamera.disabled=true;
-    captureCamera.textContent='Processando…';
+    if(!lastLandmarks || !cameraVideo.videoWidth || captureCamera.disabled) return;
+
+    // Copia o último frame imediatamente e encerra a câmera antes de qualquer processamento pesado.
+    const frozenLandmarks=lastLandmarks;
+    const c=sourceCrop();
     const out=document.createElement('canvas');out.width=1080;out.height=1080;
-    const o=out.getContext('2d');const c=sourceCrop();
+    const o=out.getContext('2d',{alpha:false});
     o.save();o.translate(1080,0);o.scale(-1,1);o.drawImage(cameraVideo,c.sx,c.sy,c.side,c.side,0,0,1080,1080);o.restore();
-    drawGlasses(o,glassesPose(lastLandmarks,1080));
-    const blob=await new Promise(resolve=>out.toBlob(resolve,'image/jpeg',.94));
-    stopCamera();
+    drawGlasses(o,glassesPose(frozenLandmarks,1080));
+
+    captureCamera.disabled=true;
+    releaseCameraStream();
+    lastLandmarks=null;
+    cameraLoading.hidden=false;
+    cameraLoading.querySelector('b').textContent='Preparando sua foto…';
+    cameraStatus.textContent='Foto capturada';
+
+    // Fecha a câmera visualmente já; o processamento passa a aparecer no editor.
+    cameraModal.hidden=true;
+    cameraModal.setAttribute('aria-hidden','true');
+    document.body.classList.remove('camera-open');
+    setHintLoading();
+
+    const blob=await new Promise(resolve=>out.toBlob(resolve,'image/jpeg',.90));
     captureCamera.textContent='● Tirar foto';
     captureCamera.disabled=false;
-    if(!blob) return alert('Não foi possível capturar a foto. Tente novamente.');
+    cameraLoading.querySelector('b').textContent='Ativando câmera…';
+    if(!blob){restoreHint();return alert('Não foi possível capturar a foto. Tente novamente.');}
     const file=new File([blob],'camera-duso.jpg',{type:'image/jpeg'});
-    handleFile(file);
+    handleFile(file,{cameraCapture:true});
   }
 
   captureCamera?.addEventListener('click',takeCameraPhoto);

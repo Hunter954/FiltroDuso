@@ -34,8 +34,18 @@
   </div>
   <input type="file" id="photoInput" accept="image/jpeg,image/png,image/webp" hidden>
   <div class="editor-live-controls" id="liveControls" hidden>
-    <div class="zoom-compact"><button type="button" id="zoomOut" aria-label="Diminuir zoom">−</button><span>Zoom</span><button type="button" id="zoomIn" aria-label="Aumentar zoom">+</button></div>
-    <button class="btn btn-primary finish-simple" id="finishPhoto">Finalizar foto</button>
+    <div class="camera-filter-choice" id="filterChoice" hidden>
+      <span>Como você quer a foto?</span>
+      <div>
+        <button type="button" class="filter-choice-btn active" id="withFilter">Com filtro</button>
+        <button type="button" class="filter-choice-btn" id="withoutFilter">Sem filtro</button>
+      </div>
+      <small>O óculos continua nas duas opções.</small>
+    </div>
+    <div class="editor-control-row">
+      <div class="zoom-compact"><button type="button" id="zoomOut" aria-label="Diminuir zoom">−</button><span>Zoom</span><button type="button" id="zoomIn" aria-label="Aumentar zoom">+</button></div>
+      <button class="btn btn-primary finish-simple" id="finishPhoto">Finalizar foto</button>
+    </div>
   </div>
   <div class="editor-done" id="doneState" hidden><div class="success-mark">✓</div><h2>Sua foto ficou pronta!</h2><a class="btn btn-primary" id="downloadPhoto" href="#">↓ Baixar minha foto</a><button class="btn btn-soft" id="makeAnother">Fazer outra foto</button></div>
 </div>

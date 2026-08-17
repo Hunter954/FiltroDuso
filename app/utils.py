@@ -28,11 +28,11 @@ def validate_and_normalize(src_path, dst_path):
         im.save(dst_path, "JPEG", quality=90, optimize=False)
 
 
-def render_submission_image(app, submission, transform, out_path):
+def render_submission_image(app, submission, transform, out_path, include_overlay=True):
     base = Path(app.config["DATA_DIR"])
     original_path = base / "uploads" / submission.original_file
     overlay_path = base / "filters" / submission.filter.overlay_file
-    if not original_path.exists() or not overlay_path.exists():
+    if not original_path.exists() or (include_overlay and not overlay_path.exists()):
         raise FileNotFoundError("Arquivos necessários não encontrados")
 
     scale = float(transform.get("scale", 1))
@@ -49,13 +49,14 @@ def render_submission_image(app, submission, transform, out_path):
         resized = source.resize((new_w, new_h), Image.Resampling.LANCZOS)
         canvas.paste(resized, (round(x), round(y)))
 
-    with Image.open(overlay_path) as overlay:
-        overlay = overlay.convert("RGBA")
-        if overlay.size != (1080, 1080):
-            overlay = overlay.resize((1080, 1080), Image.Resampling.LANCZOS)
-        output = canvas.convert("RGBA")
-        output.alpha_composite(overlay)
-        output.save(out_path, "PNG", optimize=False, compress_level=3)
+    output = canvas.convert("RGBA")
+    if include_overlay:
+        with Image.open(overlay_path) as overlay:
+            overlay = overlay.convert("RGBA")
+            if overlay.size != (1080, 1080):
+                overlay = overlay.resize((1080, 1080), Image.Resampling.LANCZOS)
+            output.alpha_composite(overlay)
+    output.save(out_path, "PNG", optimize=False, compress_level=3)
 
 
 def cleanup_expired(app):

@@ -234,3 +234,19 @@ body.camera-open{overflow:hidden}
   .camera-actions{grid-template-columns:1fr 1.35fr;gap:10px;padding:10px 12px max(14px,env(safe-area-inset-bottom))}
   .camera-privacy{padding:0 12px 10px}
 }
+
+/* Patch 2026-08-17 — captura instantânea + escolha com/sem moldura */
+.editor-live-controls{display:flex;flex-direction:column;gap:12px}
+.editor-live-controls[hidden]{display:none!important}
+.editor-control-row{display:flex;align-items:center;justify-content:center;gap:12px;width:100%}
+.camera-filter-choice{width:min(520px,100%);margin:0 auto;padding:12px;border:1px solid rgba(17,49,42,.12);border-radius:16px;background:#fff;text-align:center;box-shadow:0 8px 24px rgba(17,49,42,.06)}
+.camera-filter-choice[hidden]{display:none!important}
+.camera-filter-choice>span{display:block;margin-bottom:8px;font-size:12px;font-weight:800;color:#11312a}
+.camera-filter-choice>div{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.filter-choice-btn{border:1px solid rgba(17,49,42,.16);background:#f2f5f3;color:#11312a;border-radius:12px;padding:10px 12px;font:800 11px Inter,sans-serif;cursor:pointer;transition:.18s ease}
+.filter-choice-btn.active{background:#11312a;color:#fff;border-color:#11312a;box-shadow:0 5px 14px rgba(17,49,42,.16)}
+.camera-filter-choice small{display:block;margin-top:7px;color:#74827c;font-size:9px;font-weight:700}
+@media(max-width:560px){
+  .editor-control-row{align-items:stretch;flex-direction:column}
+  .camera-filter-choice{padding:10px}
+}
